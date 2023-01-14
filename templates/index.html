@@ -1,24 +1,40 @@
-{% extends "base.html" %} {% block content %} {% for class in classes %}
-<div>
-    <h2>{{ class.title }}</h2>
-    <ul>
-        {% for review in reviews %} {% if review.class_id == class.class_id %}
-        <li>
-            {{ review.written_by }}:{{ review.short_description }}
-            <a href="/review/{{ review.review_id }}">詳細</a>
-            {% if review.user_id == user_id %}
-            <button id="delete_review" review_id="{{ review.review_id }}">削除</button>
-            <a href="/review/delete/{{ review.review_id }}">削除</a>
-            {% endif %}
-        </li>
-        {% endif %} {% endfor %}
-    </ul>
+{% extends "base.html" %}
+{% block script %}
     <script>
-
+    const delete_btn = document.querySelector("#delete_review");
+    console.log(delete_btn);
+    delete_btn.addEventListener("click", () => {
+        console.log("Sending data");
+        const XHR = new XMLHttpRequest();
+        XHR.open("POST", `/review/delete/${document.querySelector("#delete_review").getAttribute("review_id")}`);
+        XHR.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        XHR.send("");
+    });
     </script>
-</div>
-{% endfor %}
-<!-- 全体レビュー一覧(クラスごと) -->
-<!-- クラス一覧 -->
-<!-- レビューするボタン -->
+{% endblock %}
+{% block content %}
+    <a href="/review/post">add new review</a>
+    {% for class in classes %}
+        <div>
+            <h2>{{ class.title }}</h2>
+            <ul>
+                {% for review in reviews %}
+                    {% if review.class_id == class.class_id %}
+                        <li>
+                            {{ review.written_by }}:{{ review.short_description }}
+                            <a href="/review/{{ review.review_id }}">詳細</a>
+                            {% if review.user_id == user_id %}
+                                <button id="delete_review" review_id="{{ review.review_id }}">削除</button>
+                                <a href="/review/edit/{{ review.review_id }}">編集</a>
+                            {% endif %}
+                        </li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+            <script></script>
+        </div>
+    {% endfor %}
+    <!-- 全体レビュー一覧(クラスごと) -->
+    <!-- クラス一覧 -->
+    <!-- レビューするボタン -->
 {% endblock %}

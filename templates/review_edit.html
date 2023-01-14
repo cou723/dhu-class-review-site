@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+    <form action="/review/edit/{{ review_id }}" method="POST">
+        <textarea name="comment" cols="30" rows="10">{{ comment }}</textarea>
+        <input type="submit">
+    </form>
+{% endblock %}

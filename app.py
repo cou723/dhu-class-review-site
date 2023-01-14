@@ -5,8 +5,9 @@ from collections import namedtuple
 from datetime import timedelta
 
 app = Flask(__name__, instance_relative_config=True)
+app.config['TEMPLATES_AUTO_RELOAD'] = True
 
-app.config['SECRET_KEY'] = os.urandom(24)
+app.config['SECRET_KEY'] = "seacret"
 app.permanent_session_lifetime = timedelta(minutes=3)
 
 
@@ -53,6 +54,7 @@ def get_review(db, review_id):
     db.execute(
         f"SELECT title,teacher FROM classes WHERE class_id={review_raw[2]}")
     class_info = db.fetchone()
+    review["user_id"] = review_raw[1]
     review["class_title"] = class_info[0]
     review["class_teacher"] = class_info[1]
     db.execute(f"SELECT name FROM users WHERE user_id={review_raw[1]}")
@@ -103,8 +105,22 @@ def post_review():
         f"INSERT INTO reviews VALUES({review_count}, {session['user_id']}, {request.form['class_id']}, '{request.form['comment']}')")
     db_connection.commit()
     db_connection.close()
-    return jsonify("Post review")
+    return redirect("/")
 
+@app.route("/review/edit/<int:review_id>", methods=['GET','POST'])
+@login_required
+def edit_review(review_id):
+    db_connection = get_db_connection()
+    db = db_connection.cursor()
+    current_review = get_review(db,review_id)
+    if request.method == "GET":
+        return render_template("review_edit.html",comment=current_review["comment"],review_id=review_id)
+    if session.get("user_id") != current_review["user_id"]:
+        return jsonify({"message":"failed"})
+    db.execute(f"UPDATE reviews SET comment='{request.form['comment']}' WHERE review_id={review_id}")
+    db_connection.commit()
+    db_connection.close()
+    return redirect("/")
 
 @app.route("/review/delete/<int:review_id>", methods=['POST'])
 @login_required
@@ -112,12 +128,13 @@ def delete_review(review_id):
     db_connection = get_db_connection()
     db = db_connection.cursor()
     target_data = get_review(db, review_id)
-    if session["user_id"] != target_data["user_id"]:
+    if session['user_id'] != target_data["user_id"]:
         return jsonify(
             {'message': 'Deletion of reviews written by anyone other than you is not permitted'}), 400
     db.execute(f"DELETE FROM reviews WHERE review_id={review_id}")
     db_connection.commit()
     db_connection.close()
+    return redirect("/")
 
 
 @app.route("/review/list")
@@ -145,7 +162,7 @@ def login():
         if (user_id is None):
             return jsonify("Login failed")
         else:
-            session["user_id"] = user_id[0]
+            session['user_id'] = user_id[0]
             return redirect("/")
     else:
         return render_template("login.html")

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<form action="/review/post" method="POST">
+    <select name="class_id" id="id">
+        {% for class in classes %}
+        <option value="{{class[0]}}">{{class[1]}}</option>
+        {% endfor %}
+    </select><br/>
+    comment <br/c>
+    <input type="textarea" name="comment" /><br/>
+    <input type="submit">
+</form>
+{% endblock %}

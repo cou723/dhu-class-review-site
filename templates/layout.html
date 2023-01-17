@@ -11,6 +11,12 @@
         {% block script %}{% endblock %}
     </head>
     <body>
+        <header>
+            {% if is_signin %}
+            <a href="/logout">logout</a>
+            <a href="/profile">my profile</a>
+            {% endif %}
+        </header>
         <div id="content">
             {% block content %}{% endblock %}
         </div>

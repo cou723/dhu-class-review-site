@@ -1,5 +1,5 @@
 from typing import Union
-from flask import Flask, redirect, render_template, jsonify, session, request, flash
+from flask import Flask, redirect, render_template, jsonify, session, request, flash, url_for
 import sqlite3
 from sqlite3 import Cursor, Connection
 import os
@@ -97,10 +97,7 @@ def home():
         classes.append(ClassTuple._make(class_raw)._asdict())
     reviews = db.get_review_list()
     return render_template(
-        "index.html",
-        classes=classes,
-        reviews=reviews,
-        user_id=session['user_id']
+        "index.html", classes=classes, reviews=reviews, user_id=session['user_id'], is_signin=True
     )
 
 
@@ -108,7 +105,7 @@ def home():
 def get_review_page(review_id):
     db = DbWrapper()
     review = db.get_review(review_id)
-    return render_template("review/description.html", review=review)
+    return render_template("review/description.html", review=review, is_signin=True)
 
 
 @app.route("/review/post", methods=['GET', 'POST'])
@@ -117,7 +114,7 @@ def post_review():
     db = DbWrapper()
     if request.method == 'GET':
         classes = db.execute("SELECT * FROM classes")
-        return render_template("review/post.html", classes=classes)
+        return render_template("review/post.html", classes=classes, is_signin=True)
     review_count = db.execute("SELECT count(*) FROM reviews")[0][0]
     db.execute(
         f"INSERT INTO reviews VALUES({review_count}, {session['user_id']}, {request.form['class_id']}, '{request.form['comment']}')")
@@ -130,7 +127,7 @@ def edit_review(review_id):
     db = DbWrapper()
     current_review = db.get_review(review_id)
     if request.method == "GET":
-        return render_template("review/edit.html", comment=current_review["comment"], review_id=review_id)
+        return render_template("review/edit.html", comment=current_review["comment"], review_id=review_id, is_signin=True)
     if session.get("user_id") != current_review["user_id"]:
         return jsonify({"message": "failed"})
     db.execute(
@@ -162,7 +159,7 @@ def list_reviews():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == 'GET':
-        return render_template("login.html")
+        return render_template("login.html", is_signin=False)
     db = DbWrapper()
     name = request.form.get("username")
     password = request.form.get("password")
@@ -185,7 +182,7 @@ def sign_up():
     user_count = db.execute("SELECT count(*) FROM users")
     db.execute(
         f"INSERT INTO users VALUES({user_count[0]}, '{name}', '{password}')")
-    return redirect("/login")
+    return redirect("/login", is_login=False)
 
 
 @app.route("/logout")
@@ -210,7 +207,7 @@ def profile():
         icon_path = user[3]
         if icon_path == None:
             icon_path = ICON_DIR + "/default_icon.jpg"
-        return render_template("profile.html", username=user[1], password=user[2], icon_path=icon_path)
+        return render_template("profile.html", username=user[1], password=user[2], icon_path=icon_path, is_signin=True)
     if 'file' not in request.files:
         flash('No file part')
         return redirect(request.url)
@@ -224,7 +221,7 @@ def profile():
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         return redirect(url_for('download_file', name=filename))
-    return redirect("/profile")
+    return redirect("/profile", is_login=True)
 
 
 if __name__ == '__main__':

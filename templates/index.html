@@ -1,10 +1,6 @@
-{% extends "base.html" %}
+{% extends "layout.html" %}
 {% block script %}<script></script>{% endblock %}
 {% block content %}
-    <header>
-        <a href="/logout">logout</a>
-        <a href="/profile">my profile</a>
-    </header>
     <a href="/review/post">add new review</a>
     {% for class in classes %}
         <div>

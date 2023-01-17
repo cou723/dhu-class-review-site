@@ -1,15 +1,20 @@
 from typing import Union
-from flask import Flask, redirect, render_template, jsonify, session, request
+from flask import Flask, redirect, render_template, jsonify, session, request, flash
 import sqlite3
 from sqlite3 import Cursor, Connection
 import os
 from collections import namedtuple
 from datetime import timedelta
+from werkzeug.utils import secure_filename
 
-app = Flask(__name__, instance_relative_config=True)
+ICON_DIR = "icons"
+
+app = Flask(__name__, instance_relative_config=True,
+            static_folder='./templates/icons')
 app.config['TEMPLATES_AUTO_RELOAD'] = True
-
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 app.config['SECRET_KEY'] = "seacret"
+app.config['UPLOAD_FOLDER'] = '/templates/icons'
 app.permanent_session_lifetime = timedelta(minutes=3)
 
 
@@ -29,12 +34,13 @@ class DbWrapper:
         self.db_connection.close()
 
     def execute(self, sql: str):
+        print("execute:" + sql)
         if sql.startswith("SELECT"):
             self.db.execute(sql)
             return self.db.fetchall()
-        if sql.startswith("INSERT") or sql.startswith("DELETE" or sql.startswith("UPDATE")):
+        if sql.startswith("INSERT") or sql.startswith("DELETE") or sql.startswith("UPDATE"):
             self.db.execute(sql)
-            self.db_connection.cursor()
+            self.db_connection.commit()
 
     def get_review_list(self):
         reviews_raw = self.execute("SELECT * FROM reviews")
@@ -59,7 +65,6 @@ class DbWrapper:
         review_raw = self.execute(
             f"SELECT * FROM reviews WHERE review_id={review_id}")[0]
         review = {}
-        print(review_raw)
         review["review_id"] = review_raw[0]
         class_info = self.execute(
             f"SELECT title,teacher FROM classes WHERE class_id={review_raw[2]}")[0]
@@ -74,7 +79,6 @@ class DbWrapper:
 
 def login_required(func):
     def wrapper(*args, **kwargs):
-        print(session.get("user_id"))
         if "user_id" not in session:
             return redirect("/login")
         return func(*args, **kwargs)
@@ -96,7 +100,8 @@ def home():
         "index.html",
         classes=classes,
         reviews=reviews,
-        user_id=session['user_id'])
+        user_id=session['user_id']
+    )
 
 
 @app.route("/review/<int:review_id>")
@@ -113,7 +118,7 @@ def post_review():
     if request.method == 'GET':
         classes = db.execute("SELECT * FROM classes")
         return render_template("review/post.html", classes=classes)
-    review_count = db.execute("SELECT count(*) FROM reviews")
+    review_count = db.execute("SELECT count(*) FROM reviews")[0][0]
     db.execute(
         f"INSERT INTO reviews VALUES({review_count}, {session['user_id']}, {request.form['class_id']}, '{request.form['comment']}')")
     return redirect("/")
@@ -133,7 +138,7 @@ def edit_review(review_id):
     return redirect("/")
 
 
-@app.route("/review/delete/<int:review_id>", methods=['POST'])
+@app.route("/review/delete/<int:review_id>", methods=['GET'])
 @login_required
 def delete_review(review_id):
     db = DbWrapper()
@@ -156,19 +161,18 @@ def list_reviews():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    if request.method == 'POST':
-        db = DbWrapper()
-        name = request.form.get("username")
-        password = request.form.get("password")
-        user_id = db.execute(
-            f"SELECT user_id FROM users WHERE name = '{name}' AND password_hash = '{password}'")
-        if (user_id is None):
-            return jsonify("Login failed")
-        else:
-            session['user_id'] = user_id[0]
-            return redirect("/")
-    else:
+    if request.method == 'GET':
         return render_template("login.html")
+    db = DbWrapper()
+    name = request.form.get("username")
+    password = request.form.get("password")
+    user_id = db.execute(
+        f"SELECT user_id FROM users WHERE name = '{name}' AND password_hash = '{password}'")[0]
+    if (user_id is None):
+        return jsonify("Login failed")
+    else:
+        session['user_id'] = user_id[0]
+        return redirect("/")
 
 
 @app.route("/sign_up", methods=["GET", "POST"])
@@ -189,6 +193,38 @@ def sign_up():
 def logout():
     session.pop('user_id', None)
     return redirect("/login")
+
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+@app.route("/profile", methods=["GET", "POST"])
+@login_required
+def profile():
+    db = DbWrapper()
+    if request.method == "GET":
+        user = db.execute(
+            f"SELECT * from users WHERE user_id={session['user_id']}")[0]
+        icon_path = user[3]
+        if icon_path == None:
+            icon_path = ICON_DIR + "/default_icon.jpg"
+        return render_template("profile.html", username=user[1], password=user[2], icon_path=icon_path)
+    if 'file' not in request.files:
+        flash('No file part')
+        return redirect(request.url)
+    file = request.files['file']
+    # If the user does not select a file, the browser submits an
+    # empty file without a filename.
+    if file.filename == '':
+        flash('No selected file')
+        return redirect(request.url)
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        return redirect(url_for('download_file', name=filename))
+    return redirect("/profile")
 
 
 if __name__ == '__main__':

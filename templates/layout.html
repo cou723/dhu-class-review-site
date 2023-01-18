@@ -12,11 +12,15 @@
     </head>
     <body>
         <header>
+            <a href="/">home</a>
             {% if is_signin %}
                 <a href="/logout">logout</a>
                 <a href="/profile">my profile</a>
             {% endif %}
         </header>
+        {% if error_message != None %}
+            <p>ERROR: "{{ error_message }}"</p>
+        {% endif %}
         <div id="content">
             {% block content %}{% endblock %}
         </div>

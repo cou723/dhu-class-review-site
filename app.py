@@ -25,7 +25,7 @@ def login_required(func):
     return wrapper
 
 
-@app.route("/")
+@app.route("/", methods=["GET"])
 @login_required
 def home():
     db = DbWrapper()
@@ -36,7 +36,7 @@ def home():
         classes.append(ClassTuple._make(class_raw)._asdict())
     reviews = db.get_review_list()
     return render_template(
-        "index.html", classes=classes, reviews=reviews, user_id=session['user_id'], is_signin=True
+        "index.html", classes=classes, reviews=reviews, user_id=session['user_id'], is_signin=True, error_message=request.args.get("error_message")
     )
 
 
@@ -70,7 +70,7 @@ def edit_review(review_id):
         return render_template("review/edit.html", comment=current_review["comment"], review_id=review_id, is_signin=True)
     # POST
     if session.get("user_id") != current_review["user_id"]:
-        return jsonify({"message": "failed"})
+        return redirect(url_for("/", error_message="他人のレビューは編集できません"))
     db.execute(
         f"UPDATE reviews SET comment='{request.form['comment']}' WHERE review_id={review_id}")
     return redirect("/")
@@ -82,8 +82,7 @@ def delete_review(review_id):
     db = DbWrapper()
     target_data = db.get_review(review_id)
     if session['user_id'] != target_data["user_id"]:
-        return jsonify(
-            {'message': 'Deletion of reviews written by anyone other than you is not permitted'}), 400
+        return redirect(url_for("/", error_message="他人のレビューは削除できません"), code=307)
     db.execute(f"DELETE FROM reviews WHERE review_id={review_id}")
     return redirect("/")
 
@@ -101,7 +100,7 @@ def delete_review(review_id):
 def login():
     # GET
     if request.method == 'GET':
-        return render_template("login.html", is_signin=False)
+        return render_template("login.html", is_signin=False, error_message=request.args.get("error_message"))
     # POST
     db = DbWrapper()
     name = request.form.get("username")
@@ -110,9 +109,8 @@ def login():
         f"SELECT user_id FROM users WHERE name = '{name}' AND password_hash = '{password}'")
     if (not user_id):
         return jsonify("Login failed")
-    else:
-        session['user_id'] = user_id[0][0]
-        return redirect("/")
+    session['user_id'] = user_id[0][0]
+    return redirect("/")
 
 
 @app.route("/sign_up", methods=["GET", "POST"])
@@ -153,7 +151,7 @@ def profile():
         icon_path = user[3]
         if icon_path == None:
             icon_path = ICON_DIR + "/default_icon.jpg"
-        return render_template("profile.html", username=user[1], password=user[2], icon_path=icon_path, is_signin=True)
+        return render_template("profile.html", username=user[1], password=user[2], icon_path=icon_path, is_signin=True, error_message=request.args.get("error_message"))
     # POST
     if 'file' in request.files and request.files['file'].filename == '':
         file = request.files['file']
@@ -173,16 +171,17 @@ def change_password():
     db = DbWrapper()
     # GET
     if request.method == "GET":
-        return render_template("change_password.html")
+        return render_template("change_password.html", error_message=request.args.get("error_message"))
     # POST
     password_hash = db.execute(
-        f"SELECT password_hash FROM users WHERE user_id={session['user_id']}")
+        f"SELECT password_hash FROM users WHERE user_id={session['user_id']}")[0][0]
+    print(request.form["old_password"], password_hash)
     if request.form["old_password"] != password_hash:
-        return jsonify({"message": "パスワードが違います"})
+        return redirect("/profile/change_password?error_message=パスワードが違います")
     if request.form["new_password"] != request.form["new_password_confirmation"]:
-        return jsonify({"message": "確認用のパスワードと新しいパスワードが一致しません"})
+        return redirect("/profile/change_password?error_message=確認用のパスワードと新しいパスワードが一致しません")
     db.execute(
-        f"UPDATE users SET password_hash={request.form['new_password']} WHERE user_id={session['user_id']}")
+        f"UPDATE users SET password_hash='{request.form['new_password']}' WHERE user_id={session['user_id']}")
     return redirect("/profile")
 
 

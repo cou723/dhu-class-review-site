@@ -2,7 +2,7 @@
 {% block content %}
     <!-- 名前 パスワード プロファイル写真 -->
     <h1>マイプロファイル</h1>
-    <form action="/profile">
+    <form action="/profile" method="POST">
         <img src="{{ icon_path }}"
              style="width: 100px;
                     height: 100px"
@@ -12,7 +12,7 @@
         <br />
         <input type="text" name="username" value="{{ username }}" />
         <br />
-        <input type="password" name="password" value="{{ password }}" />
+        <a href="/profile/change_password">パスワードを変更する</a>
         <br />
         <input type="submit" value="プロファイルを更新" />
     </form>

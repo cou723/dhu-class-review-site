@@ -65,8 +65,10 @@ def post_review():
 def edit_review(review_id):
     db = DbWrapper()
     current_review = db.get_review(review_id)
+    # GET
     if request.method == "GET":
         return render_template("review/edit.html", comment=current_review["comment"], review_id=review_id, is_signin=True)
+    # POST
     if session.get("user_id") != current_review["user_id"]:
         return jsonify({"message": "failed"})
     db.execute(
@@ -86,35 +88,39 @@ def delete_review(review_id):
     return redirect("/")
 
 
-@app.route("/review/list")
-@login_required
-def list_reviews():
-    db = DbWrapper()
-    review_list = db.execute(
-        f"SELECT * FROM review WHERE user_id = {session['user_id']}")
-    return jsonify(review_list)
+# @app.route("/review/my_list")
+# @login_required
+# def list_reviews():
+#     db = DbWrapper()
+#     review_list = db.execute(
+#         f"SELECT * FROM review WHERE user_id = {session['user_id']}")
+#     return jsonify(review_list)
 
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    # GET
     if request.method == 'GET':
         return render_template("login.html", is_signin=False)
+    # POST
     db = DbWrapper()
     name = request.form.get("username")
     password = request.form.get("password")
     user_id = db.execute(
-        f"SELECT user_id FROM users WHERE name = '{name}' AND password_hash = '{password}'")[0]
-    if (user_id is None):
+        f"SELECT user_id FROM users WHERE name = '{name}' AND password_hash = '{password}'")
+    if (not user_id):
         return jsonify("Login failed")
     else:
-        session['user_id'] = user_id[0]
+        session['user_id'] = user_id[0][0]
         return redirect("/")
 
 
 @app.route("/sign_up", methods=["GET", "POST"])
 def sign_up():
+    # GET
     if request.method == 'GET':
         return render_template("sign_up.html")
+    # POST
     db = DbWrapper()
     name = request.form.get("username")
     password = request.form.get("password")
@@ -135,10 +141,11 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# 作り途中
+
 @app.route("/profile", methods=["GET", "POST"])
 @login_required
 def profile():
+    # GET
     db = DbWrapper()
     if request.method == "GET":
         user = db.execute(
@@ -147,19 +154,37 @@ def profile():
         if icon_path == None:
             icon_path = ICON_DIR + "/default_icon.jpg"
         return render_template("profile.html", username=user[1], password=user[2], icon_path=icon_path, is_signin=True)
-    if 'file' not in request.files:
-        flash('No file part')
-        return redirect(request.url)
-    file = request.files['file']
-    if file.filename == '':
+    # POST
+    if 'file' in request.files and request.files['file'].filename == '':
+        file = request.files['file']
         flash('No selected file')
-        return redirect(request.url)
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        return redirect(url_for('download_file', name=filename))
-    return redirect("/profile", is_login=True)
+        if file and allowed_file(file.filename):
+            filename = session["user_id"]
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+    if "username" in request.form:
+        db.execute(
+            f"UPDATE users SET name='{request.form['username']}' WHERE user_id={session['user_id']}")
+    return redirect("/")
+
+
+@app.route("/profile/change_password", methods=["GET", "POST"])
+@login_required
+def change_password():
+    db = DbWrapper()
+    # GET
+    if request.method == "GET":
+        return render_template("change_password.html")
+    # POST
+    password_hash = db.execute(
+        f"SELECT password_hash FROM users WHERE user_id={session['user_id']}")
+    if request.form["old_password"] != password_hash:
+        return jsonify({"message": "パスワードが違います"})
+    if request.form["new_password"] != request.form["new_password_confirmation"]:
+        return jsonify({"message": "確認用のパスワードと新しいパスワードが一致しません"})
+    db.execute(
+        f"UPDATE users SET password_hash={request.form['new_password']} WHERE user_id={session['user_id']}")
+    return redirect("/profile")
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=3000)

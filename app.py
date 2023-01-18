@@ -2,10 +2,11 @@ from flask import Flask, redirect, render_template, jsonify, session, request, f
 import os
 from collections import namedtuple
 from datetime import timedelta
-from werkzeug.utils import secure_filename
 from db import DbWrapper
+import hashlib
 
 ICON_DIR = "icons"
+DEFAULT_ICON_PATH = ICON_DIR+"/default_icon.jpg"
 
 app = Flask(__name__, instance_relative_config=True,
             static_folder='./templates/icons')
@@ -44,7 +45,7 @@ def home():
 def get_review_page(review_id):
     db = DbWrapper()
     review = db.get_review(review_id)
-    return render_template("review/description.html", review=review, is_signin=True)
+    return render_template("review/description.html", review=review, is_signin=True, error_message=request.args.get("error_message"))
 
 
 @app.route("/review/post", methods=['GET', 'POST'])
@@ -104,9 +105,9 @@ def login():
     # POST
     db = DbWrapper()
     name = request.form.get("username")
-    password = request.form.get("password")
+    password_hash = hashlib.sha256(request.form.get("password").encode()).hexdigest()
     user_id = db.execute(
-        f"SELECT user_id FROM users WHERE name = '{name}' AND password_hash = '{password}'")
+        f"SELECT user_id FROM users WHERE name='{name}' AND password_hash='{password_hash}'")
     if (not user_id):
         return jsonify("Login failed")
     session['user_id'] = user_id[0][0]
@@ -117,15 +118,15 @@ def login():
 def sign_up():
     # GET
     if request.method == 'GET':
-        return render_template("sign_up.html")
+        return render_template("sign_up.html", error_message=request.args.get("error_message"))
     # POST
     db = DbWrapper()
     name = request.form.get("username")
-    password = request.form.get("password")
-    user_count = db.execute("SELECT count(*) FROM users")
+    password_hash = hashlib.sha256(request.form.get("password").encode()).hexdigest()
+    user_count = db.execute("SELECT count(*) FROM users")[0][0]
     db.execute(
-        f"INSERT INTO users VALUES({user_count[0]}, '{name}', '{password}')")
-    return redirect("/login", is_login=False)
+        f"INSERT INTO users VALUES({user_count}, '{name}', '{password_hash}', '{DEFAULT_ICON_PATH}')")
+    return redirect("/login")
 
 
 @app.route("/logout")
@@ -175,13 +176,12 @@ def change_password():
     # POST
     password_hash = db.execute(
         f"SELECT password_hash FROM users WHERE user_id={session['user_id']}")[0][0]
-    print(request.form["old_password"], password_hash)
-    if request.form["old_password"] != password_hash:
+    if hashlib.sha256(request.form["old_password"].encode()).hexdigest() != password_hash:
         return redirect("/profile/change_password?error_message=パスワードが違います")
     if request.form["new_password"] != request.form["new_password_confirmation"]:
         return redirect("/profile/change_password?error_message=確認用のパスワードと新しいパスワードが一致しません")
     db.execute(
-        f"UPDATE users SET password_hash='{request.form['new_password']}' WHERE user_id={session['user_id']}")
+        f"UPDATE users SET password_hash='{hashlib.sha256(request.form['new_password'].encode()).hexdigest()}' WHERE user_id={session['user_id']}")
     return redirect("/profile")
 
 

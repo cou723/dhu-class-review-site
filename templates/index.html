@@ -1,26 +1,29 @@
 {% extends "layout.html" %}
-{% block script %}<script></script>{% endblock %}
 {% block content %}
-    <h1>Home</h1>
-    <a href="/review/post">add new review</a>
-    {% for class in classes %}
-        <div>
-            <h2>{{ class.title }}</h2>
-            <ul>
-                {% for review in reviews %}
-                    {% if review.class_id == class.class_id %}
-                        <li>
-                            {{ review.written_by }}:{{ review.short_description }}
-                            <a href="/review/{{ review.review_id }}">詳細</a>
-                            {% if review.user_id == user_id %}
-                                <a href="/review/delete/{{ review.review_id }}">削除</a>
-                                <a href="/review/edit/{{ review.review_id }}">編集</a>
+    <div class="row justify-content-md-center">
+        <div class="col-8">
+            <h1>Home</h1>
+            <a class="btn btn-primary my-2" href="/review/post">add new review</a>
+            {% for class in classes %}
+                <div>
+                    <h2>{{ class.title }}</h2>
+                    <ul>
+                        {% for review in reviews %}
+                            {% if review.class_id == class.class_id %}
+                                <li>
+                                    {{ review.written_by }}:{{ review.short_description }}
+                                    <a href="/review/{{ review.review_id }}">詳細</a>
+                                    {% if review.user_id == user_id %}
+                                        <a href="/review/delete/{{ review.review_id }}">削除</a>
+                                        <a href="/review/edit/{{ review.review_id }}">編集</a>
+                                    {% endif %}
+                                </li>
                             {% endif %}
-                        </li>
-                    {% endif %}
-                {% endfor %}
-            </ul>
-            <script></script>
+                        {% endfor %}
+                    </ul>
+                    <script></script>
+                </div>
+            {% endfor %}
         </div>
-    {% endfor %}
+    </div>
 {% endblock %}

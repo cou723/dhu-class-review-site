@@ -5,9 +5,9 @@
             <form class="mb-3" id="post_form" action="/review/post" method="POST">
                 <select aria-label="授業" class="form-select mb-3" name="class_id" id="id">
                     {% for class in classes %}
-                    <option value="{{ class[0] }}">
-                        {{ class[1] }}
-                    </option>
+                        <option value="{{ class[0] }}">
+                            {{ class[1] }}
+                        </option>
                     {% endfor %}
                 </select>
                 <div class="mb-3">

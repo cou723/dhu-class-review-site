@@ -1,21 +1,24 @@
 {% extends "layout.html" %}
 {% block content %}
-    <form id="post_form" action="/review/post" method="POST">
-        <p id="error_message"></p>
-        <select name="class_id" id="id">
-            {% for class in classes %}
-                <option value="{{ class[0] }}">
-                    {{ class[1] }}
-                </option>
-            {% endfor %}
-        </select>
-        <br/>
-        comment
-        <br/>
-        <input id="comment" type="textarea" name="comment" />
-        <br/>
-    </form>
-    <button id="submit">送信</button>
+    <div class="row justify-content-md-center">
+        <div class="col-8">
+            <form class="mb-3" id="post_form" action="/review/post" method="POST">
+                <select aria-label="授業" class="form-select mb-3" name="class_id" id="id">
+                    {% for class in classes %}
+                    <option value="{{ class[0] }}">
+                        {{ class[1] }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <div class="mb-3">
+                    <label for="comment" class="form-label">レビュー内容</label>
+                    <textarea name="comment" type="comment" class="form-control" id="comment"></textarea>
+                    <small id="error_message" class="form-text text-muted"></small>
+                </div>
+            </form>
+            <button class="btn btn-primary" id="submit">投稿</button>
+        </div>
+    </div>
 {% endblock %}
 {% block endscript %}
     <script>

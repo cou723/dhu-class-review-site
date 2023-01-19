@@ -1,8 +1,10 @@
 {% extends "layout.html" %}
 {% block content %}
     <form action="/sign_up" method="POST">
+        <!-- !空 and 英数字日本語 -->
         <input type="text" name="username" />
         <br />
+        <!-- !空 and 4文字以上 and 英数字 -->
         <input type="password" name="password" />
         <br />
         <input type="submit" value="sign up" />

@@ -6,14 +6,15 @@ from db import DbWrapper
 import hashlib
 
 ICON_DIR = "icons"
-DEFAULT_ICON_PATH = ICON_DIR+"/default_icon.jpg"
+DEFAULT_ICON_PATH = "default_icon.jpg"
 
 app = Flask(__name__, instance_relative_config=True,
             static_folder='./templates/icons')
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 app.config['SECRET_KEY'] = "seacret"
-app.config['UPLOAD_FOLDER'] = '/templates/icons'
+app.config['UPLOAD_FOLDER'] = 'templates/icons/'
+app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
 app.permanent_session_lifetime = timedelta(minutes=3)
 
 
@@ -52,9 +53,11 @@ def get_review_page(review_id):
 @login_required
 def post_review():
     db = DbWrapper()
+    # GET
     if request.method == 'GET':
         classes = db.execute("SELECT * FROM classes")
         return render_template("review/post.html", classes=classes, is_signin=True)
+    # POST
     review_count = db.execute("SELECT count(*) FROM reviews")[0][0]
     db.execute(
         f"INSERT INTO reviews VALUES({review_count}, {session['user_id']}, {request.form['class_id']}, '{request.form['comment']}')")
@@ -71,7 +74,7 @@ def edit_review(review_id):
         return render_template("review/edit.html", comment=current_review["comment"], review_id=review_id, is_signin=True)
     # POST
     if session.get("user_id") != current_review["user_id"]:
-        return redirect(url_for("/", error_message="他人のレビューは編集できません"))
+        return jsonify({"message": "Editing other people's reviews is not permitted"})
     db.execute(
         f"UPDATE reviews SET comment='{request.form['comment']}' WHERE review_id={review_id}")
     return redirect("/")
@@ -83,18 +86,9 @@ def delete_review(review_id):
     db = DbWrapper()
     target_data = db.get_review(review_id)
     if session['user_id'] != target_data["user_id"]:
-        return redirect(url_for("/", error_message="他人のレビューは削除できません"), code=307)
+        return jsonify({"message": "Deletion of other people's reviews is not permitted"})
     db.execute(f"DELETE FROM reviews WHERE review_id={review_id}")
     return redirect("/")
-
-
-# @app.route("/review/my_list")
-# @login_required
-# def list_reviews():
-#     db = DbWrapper()
-#     review_list = db.execute(
-#         f"SELECT * FROM review WHERE user_id = {session['user_id']}")
-#     return jsonify(review_list)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -105,11 +99,12 @@ def login():
     # POST
     db = DbWrapper()
     name = request.form.get("username")
-    password_hash = hashlib.sha256(request.form.get("password").encode()).hexdigest()
+    password_hash = hashlib.sha256(
+        request.form.get("password").encode()).hexdigest()
     user_id = db.execute(
         f"SELECT user_id FROM users WHERE name='{name}' AND password_hash='{password_hash}'")
     if (not user_id):
-        return jsonify("Login failed")
+        return redirect("/login?error_message=ユーザー名またはパスワードが違います")
     session['user_id'] = user_id[0][0]
     return redirect("/")
 
@@ -122,10 +117,13 @@ def sign_up():
     # POST
     db = DbWrapper()
     name = request.form.get("username")
-    already_used_name_list = db.execute(f"SELECT name FROM users WHERE name='{name}'")[0]
+    already_used_name_list = db.execute(
+        f"SELECT name FROM users WHERE name='{name}'")
+    print(already_used_name_list)
     if len(already_used_name_list):
         return render_template("sign_up.html", error_message="その名前はもう使われています")
-    password_hash = hashlib.sha256(request.form.get("password").encode()).hexdigest()
+    password_hash = hashlib.sha256(
+        request.form.get("password").encode()).hexdigest()
     user_count = db.execute("SELECT count(*) FROM users")[0][0]
     db.execute(
         f"INSERT INTO users VALUES({user_count}, '{name}', '{password_hash}', '{DEFAULT_ICON_PATH}')")
@@ -147,24 +145,24 @@ def allowed_file(filename):
 @app.route("/profile", methods=["GET", "POST"])
 @login_required
 def profile():
-    # GET
     db = DbWrapper()
+    # GET
     if request.method == "GET":
         user = db.execute(
             f"SELECT * from users WHERE user_id={session['user_id']}")[0]
         icon_path = user[3]
         if icon_path == None:
-            icon_path = ICON_DIR + "/default_icon.jpg"
+            icon_path = "default_icon.jpg"
         return render_template("profile.html", username=user[1], password=user[2], icon_path=icon_path, is_signin=True, error_message=request.args.get("error_message"))
     # POST
-    print(request.files["icon"],request.files['icon'].filename)
-    if 'icon' in request.files and request.files['icon'].filename == '':
-        print("file change")
-        file = request.files['file']
-        flash('No selected file')
-        if file and allowed_file(file.filename):
-            filename = session["user_id"]
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+    if 'icon' in request.files and request.files['icon'].filename != '':
+        if not allowed_file(request.files['icon'].filename):
+            return jsonify({'message': 'Icon file must be jpeg, jpg, png.'}), 400
+        file = request.files['icon']
+        filename = str(session["user_id"]) + ".jpg"
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        db.execute(
+            f"UPDATE users SET img_path='{str(session['user_id'])}.jpg' WHERE user_id={session['user_id']}")
     if "username" in request.form:
         db.execute(
             f"UPDATE users SET name='{request.form['username']}' WHERE user_id={session['user_id']}")
@@ -184,7 +182,7 @@ def change_password():
     if hashlib.sha256(request.form["old_password"].encode()).hexdigest() != password_hash:
         return redirect("/profile/change_password?error_message=パスワードが違います")
     if request.form["new_password"] != request.form["new_password_confirmation"]:
-        return redirect("/profile/change_password?error_message=確認用のパスワードと新しいパスワードが一致しません")
+        return jsonify({'message': 'The new password confirmation new password entered does not match.'}), 400
     db.execute(
         f"UPDATE users SET password_hash='{hashlib.sha256(request.form['new_password'].encode()).hexdigest()}' WHERE user_id={session['user_id']}")
     return redirect("/profile")

@@ -1,7 +1,21 @@
 {% extends "layout.html" %}
 {% block content %}
-    <form action="/review/edit/{{ review_id }}" method="POST">
-        <textarea name="comment" cols="30" rows="10">{{ comment }}</textarea>
-        <input type="submit">
+    <form id="edit_form" action="/review/edit/{{ review_id }}" method="POST">
+        <p id="error_message"></p>
+        <textarea id="comment" name="comment" cols="30" rows="10">{{ comment }}</textarea>
     </form>
+    <button id="submit">送信</button>
+{% endblock %}
+{% block endscript %}
+    <script>
+    document.querySelector("#submit").addEventListener("click", () => {
+        let comment = document.querySelector("#comment").value;
+        console.log(comment,comment.includes(";"));
+        if (comment == "" || comment.includes(";")) document.querySelector("#error_message").innerText = "コメントが空白、または;を含めることは許可されていません";
+        else {
+            document.querySelector("#error_message").innerText = "";
+            document.querySelector("#edit_form").submit();
+        }
+    });
+    </script>
 {% endblock %}

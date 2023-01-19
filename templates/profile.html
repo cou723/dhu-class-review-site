@@ -2,18 +2,36 @@
 {% block content %}
     <!-- 名前 パスワード プロファイル写真 -->
     <h1>マイプロファイル</h1>
-    <form action="/profile" method="POST">
-        <img src="{{ icon_path }}"
+    <form id="profile_form"
+          action="/profile"
+          method="POST"
+          enctype="multipart/form-data">
+        <img src="icons/{{ icon_path }}"
              style="width: 100px;
                     height: 100px"
              alt="ユーザーアイコン"/>
         <br />
         <input type="file" name="icon" />
         <br />
-        <input type="text" name="username" value="{{ username }}" />
+        <p id="error_message"></p>
+        <br />
+        <input id="username" type="text" name="username" value="{{ username }}" />
         <br />
         <a href="/profile/change_password">パスワードを変更する</a>
         <br />
-        <input type="submit" value="プロファイルを更新" />
     </form>
+    <button id="submit">プロファイルを更新</button>
+{% endblock %}
+{% block endscript %}
+    <script>
+    document.querySelector("#submit").addEventListener("click", () => {
+        let username = document.querySelector("#username").value;
+        console.log(username, username.includes(";"));
+        if (username == "" || username.includes(";")) document.querySelector("#error_message").innerText = "ユーザー名が空白、または;を含めることは許可されていません";
+        else {
+            document.querySelector("#error_message").innerText = "";
+            document.querySelector("#profile_form").submit();
+        }
+    });
+    </script>
 {% endblock %}

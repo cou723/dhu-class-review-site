@@ -1,12 +1,24 @@
 {% extends "layout.html" %}
 {% block content %}
-    <h1>ログイン</h1>
-    <form action="/login" method="POST">
-        <input type="text" name="username" />
-        <br />
-        <input type="password" name="password" />
-        <br />
-        <input type="submit" value="Login" />
-    </form>
-    <a href="/sign_up">sign_up</a>
+    <div class="row justify-content-md-center">
+        <div class="col-5">
+            <h1>Login</h1>
+            <form class="mb-3" action="/login" method="POST">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Name</label>
+                    <input type="text"
+                           class="form-control"
+                           name="username"
+                           id="username"
+                           placeholder="田中太郎"/>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input name="password" type="password" class="form-control" id="password" />
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+            </form>
+            <a class="btn btn-outline-primary mb-3" href="/sign_up" role="button">Sign Up</a>
+        </div>
+    </div>
 {% endblock %}

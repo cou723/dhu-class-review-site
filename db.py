@@ -2,8 +2,7 @@ import sqlite3
 from sqlite3 import Cursor, Connection
 
 
-def get_db_connection():
-    return sqlite3.connect("Test.db")
+DB_PATH = "Test.db"
 
 
 class DbWrapper:
@@ -11,7 +10,7 @@ class DbWrapper:
     db: Cursor
 
     def __init__(self):
-        self.db_connection = get_db_connection()
+        self.db_connection = sqlite3.connect(DB_PATH)
         self.db = self.db_connection.cursor()
 
     def __del__(self):

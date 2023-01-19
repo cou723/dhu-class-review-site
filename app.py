@@ -60,7 +60,7 @@ def post_review():
     # POST
     review_count = db.execute("SELECT count(*) FROM reviews")[0][0]
     db.execute(
-        f"INSERT INTO reviews VALUES({review_count}, {session['user_id']}, {request.form['class_id']}, '{request.form['comment']}')")
+        f"INSERT INTO reviews VALUES({review_count}, {session['user_id'].strip()}, {request.form['class_id'].strip()}, '{request.form['comment'].strip()}')")
     return redirect("/")
 
 
@@ -76,7 +76,7 @@ def edit_review(review_id):
     if session.get("user_id") != current_review["user_id"]:
         return jsonify({"message": "Editing other people's reviews is not permitted"})
     db.execute(
-        f"UPDATE reviews SET comment='{request.form['comment']}' WHERE review_id={review_id}")
+        f"UPDATE reviews SET comment='{request.form['comment'].strip()}' WHERE review_id={review_id}")
     return redirect("/")
 
 
@@ -98,7 +98,7 @@ def login():
         return render_template("login.html", is_signin=False, error_message=request.args.get("error_message"))
     # POST
     db = DbWrapper()
-    name = request.form.get("username")
+    name = request.form.get("username").strip()
     password_hash = hashlib.sha256(
         request.form.get("password").encode()).hexdigest()
     user_id = db.execute(
@@ -116,7 +116,7 @@ def sign_up():
         return render_template("sign_up.html", error_message=request.args.get("error_message"))
     # POST
     db = DbWrapper()
-    name = request.form.get("username")
+    name = request.form.get("username").strip()
     already_used_name_list = db.execute(
         f"SELECT name FROM users WHERE name='{name}'")
     print(already_used_name_list)
@@ -165,7 +165,7 @@ def profile():
             f"UPDATE users SET img_path='{str(session['user_id'])}.jpg' WHERE user_id={session['user_id']}")
     if "username" in request.form:
         db.execute(
-            f"UPDATE users SET name='{request.form['username']}' WHERE user_id={session['user_id']}")
+            f"UPDATE users SET name='{request.form['username'].strip()}' WHERE user_id={session['user_id']}")
     return redirect("/")
 
 

@@ -56,11 +56,11 @@ def post_review():
     # GET
     if request.method == 'GET':
         classes = db.execute("SELECT * FROM classes")
-        return render_template("review/post.html", classes=classes, is_signin=True)
+        return render_template("review/post.html", classes=classes, is_signin=True, error_message=request.args.get("error_message"))
     # POST
     review_count = db.execute("SELECT count(*) FROM reviews")[0][0]
     db.execute(
-        f"INSERT INTO reviews VALUES({review_count}, {session['user_id'].strip()}, {request.form['class_id'].strip()}, '{request.form['comment'].strip()}')")
+        f"INSERT INTO reviews VALUES({review_count}, {session['user_id']}, {request.form['class_id'].strip()}, '{request.form['comment'].strip()}')")
     return redirect("/")
 
 

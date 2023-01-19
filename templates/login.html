@@ -1,13 +1,11 @@
 {% extends "layout.html" %}
 {% block content %}
+    <h1>ログイン</h1>
     <form action="/login" method="POST">
-        <!-- 空でない -->
         <input type="text" name="username" />
         <br />
-        <!-- 空でない -->
         <input type="password" name="password" />
         <br />
-        <!-- 空でない -->
         <input type="submit" value="Login" />
     </form>
     <a href="/sign_up">sign_up</a>

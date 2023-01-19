@@ -157,7 +157,9 @@ def profile():
             icon_path = ICON_DIR + "/default_icon.jpg"
         return render_template("profile.html", username=user[1], password=user[2], icon_path=icon_path, is_signin=True, error_message=request.args.get("error_message"))
     # POST
-    if 'file' in request.files and request.files['file'].filename == '':
+    print(request.files["icon"],request.files['icon'].filename)
+    if 'icon' in request.files and request.files['icon'].filename == '':
+        print("file change")
         file = request.files['file']
         flash('No selected file')
         if file and allowed_file(file.filename):

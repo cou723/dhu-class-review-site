@@ -122,6 +122,9 @@ def sign_up():
     # POST
     db = DbWrapper()
     name = request.form.get("username")
+    already_used_name_list = db.execute(f"SELECT name FROM users WHERE name='{name}'")[0]
+    if len(already_used_name_list):
+        return render_template("sign_up.html", error_message="その名前はもう使われています")
     password_hash = hashlib.sha256(request.form.get("password").encode()).hexdigest()
     user_count = db.execute("SELECT count(*) FROM users")[0][0]
     db.execute(

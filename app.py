@@ -71,7 +71,7 @@ def edit_review(review_id):
     current_review = db.get_review(review_id)
     # GET
     if request.method == "GET":
-        return render_template("review/edit.html", comment=current_review["comment"], review_id=review_id, is_signin=True)
+        return render_template("review/edit.html", comment=current_review["comment"], review_id=review_id, is_signin=True, error_message=request.args.get("error_message"))
     # POST
     if session.get("user_id") != current_review["user_id"]:
         return jsonify({"message": "Editing other people's reviews is not permitted"})

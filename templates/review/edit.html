@@ -1,16 +1,24 @@
 {% extends "layout.html" %}
 {% block content %}
-    <form id="edit_form" action="/review/edit/{{ review_id }}" method="POST">
-        <p id="error_message"></p>
-        <textarea id="comment" name="comment" cols="30" rows="10">{{ comment }}</textarea>
-    </form>
-    <button id="submit">送信</button>
+    <div class="row justify-content-center">
+        <div class="col-8">
+            <h1>レビュー編集</h1>
+            <form id="edit_form" action="/review/edit/{{ review_id }}" method="POST">
+                <div class="mb-3">
+                    <label for="comment" class="form-label">レビュー内容</label>
+                    <textarea name="comment" type="comment" class="form-control" id="comment">{{ comment }}</textarea>
+                    <small id="error_message" class="form-text text-muted text-danger"></small>
+                </div>
+            </form>
+            <button class="btn btn-primary" id="submit">送信</button>
+        </div>
+    </div>
 {% endblock %}
 {% block endscript %}
     <script>
     document.querySelector("#submit").addEventListener("click", () => {
         let comment = document.querySelector("#comment").value;
-        console.log(comment,comment.includes(";"));
+        console.log(comment, comment.includes(";"));
         if (comment == "" || comment.includes(";")) document.querySelector("#error_message").innerText = "コメントが空白、または;を含めることは許可されていません";
         else {
             document.querySelector("#error_message").innerText = "";

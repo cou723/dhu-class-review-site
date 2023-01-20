@@ -11,19 +11,25 @@
                         {% for review in reviews %}
                             {% if review.class_id == class.class_id %}
                                 <li class="list-group-item">
-                                    {{ review.short_description }}
-                                    <small class="text-muted">作成者: {{ review.written_by }}</small>
-                                    <div class="btn-group" role="group" aria-label="label">
-                                        <a class="btn btn-outline-primary" href="/review/{{ review.review_id }}">詳細</a>
-                                        {% if review.user_id == user_id %}
-                                            <a class="btn btn-outline-primary"
-                                               href="/review/edit/{{ review.review_id }}">編集</a>
+                                    <div class="row">
+                                        <div class="col">
+                                            {{ review.short_description }}
+                                            <small class="text-muted">作成者: {{ review.written_by }}</small>
                                         </div>
-                                        <a class="btn btn-outline-danger"
-                                           href="/review/delete/{{ review.review_id }}">削除</a>
-                                    {% else %}
+                                        <div class="col-auto">
+                                            <div class="btn-group col-auto" role="group" aria-label="label">
+                                                <a class="btn btn-outline-primary" href="/review/{{ review.review_id }}">詳細</a>
+                                                {% if review.user_id == user_id %}
+                                                    <a class="btn btn-outline-primary"
+                                                       href="/review/edit/{{ review.review_id }}">編集</a>
+                                                </div>
+                                                <a class="btn btn-outline-danger"
+                                                   href="/review/delete/{{ review.review_id }}">削除</a>
+                                            {% else %}
+                                            </div>
+                                        {% endif %}
                                     </div>
-                                {% endif %}
+                                </div>
                             </li>
                         {% endif %}
                     {% endfor %}

@@ -34,7 +34,7 @@
                 {% endif %}
             </ul>
         </header>
-        {% if error_message != None %}<p class="text-danger">ERROR: "{{ error_message }}"</p>{% endif %}
+        {% if error_message != None %}<div class="mx-3 alert alert-danger" role="alert">{{ error_message }}</div>{% endif %}
         <div class="container" id="content">
             {% block content %}{% endblock %}
         </div>

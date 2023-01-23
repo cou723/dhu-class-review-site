@@ -25,7 +25,7 @@
     document.querySelector("#submit").addEventListener("click", () => {
         document.querySelector("#error_message").innerText = "";
         let comment = document.querySelector("#comment").value;
-        if (comment == "" || comment.includes(";") || comment.includes("'") || comment ('"'))
+        if (comment == "" || comment.includes(";") || comment.includes("'") || comment.includes('"'))
             document.querySelector("#error_message").innerText = "コメントが空白、または;'_\"を含めることは許可されていません";
         else {
             document.querySelector("#post_form").submit();

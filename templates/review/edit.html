@@ -17,12 +17,12 @@
 {% block endscript %}
     <script>
     document.querySelector("#submit").addEventListener("click", () => {
-        document.querySelector("#edit_form").submit();
+        document.querySelector("#error_message").innerText = "";
         let comment = document.querySelector("#comment").value;
-        if (comment == "" || comment.includes(";") || comment.includes("'") || comment ('"'))
-            document.querySelector("#error_message").innerText = "コメントが空白、または;'_\"を含めることは許可されていません";
+        if (comment == "" || comment.includes(";") || comment.includes("'") || comment.includes('"'))
+        document.querySelector("#error_message").innerText = "コメントが空白、または;'_\"を含めることは許可されていません";
         else {
-            document.querySelector("#error_message").innerText = "";
+            document.querySelector("#edit_form").submit();
         }
     });
     </script>

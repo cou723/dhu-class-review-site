@@ -59,8 +59,11 @@ def post_review():
         return render_template("review/post.html", classes=classes, is_signin=True, error_message=request.args.get("error_message"))
     # POST
     review_count = db.execute("SELECT count(*) FROM reviews")[0][0]
+    comment = request.form['comment'].strip()
+    if ('"' in comment or "'" in comment):
+        return jsonify({'message': '" or \' are not aviable'}), 400
     db.execute(
-        f"INSERT INTO reviews VALUES({review_count}, {session['user_id']}, {request.form['class_id'].strip()}, '{request.form['comment'].strip()}')")
+        f"INSERT INTO reviews VALUES({review_count}, {session['user_id']}, {request.form['class_id'].strip()}, '{comment}')")
     return redirect("/")
 
 
@@ -75,8 +78,11 @@ def edit_review(review_id):
     # POST
     if session.get("user_id") != current_review["user_id"]:
         return jsonify({"message": "Editing other people's reviews is not permitted"})
+    comment = request.form['comment'].strip()
+    if ('"' in comment or "'" in comment):
+        return jsonify({'message': '" or \' are not aviable'}), 400
     db.execute(
-        f"UPDATE reviews SET comment='{request.form['comment'].strip()}' WHERE review_id={review_id}")
+        f"UPDATE reviews SET comment='{comment}' WHERE review_id={review_id}")
     return redirect("/")
 
 

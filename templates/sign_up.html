@@ -37,7 +37,9 @@
         document.querySelector("#username_error_message").innerText = "";
         document.querySelector("#password_error_message").innerText = "";
         if (username == "") document.querySelector("#username_error_message").innerText = "ユーザー名が未記入です";
-        else if (!username.indexOf(";")) document.querySelector("#username_error_message").innerText = "ユーザー名に;を含めることはできません";
+        else if (username.include(";")) document.querySelector("#username_error_message").innerText = "ユーザー名に;を含めることはできません";
+        else if (username.include("'")) document.querySelector("#username_error_message").innerText = "ユーザー名に'を含めることはできません";
+        else if (username.include('"')) document.querySelector("#username_error_message").innerText = "ユーザー名に\"を含めることはできません";
         else if (password.length < 4) document.querySelector("#password_error_message").innerText = "パスワードは4文字以上である必要があります";
         else {
             document.querySelector("#username_error_message").innerText = "";

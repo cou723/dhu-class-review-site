@@ -105,6 +105,8 @@ def login():
     # POST
     db = DbWrapper()
     name = request.form.get("username").strip()
+    if "'" in name or ";" in name or '"' in name:
+        name = name.replace(';','').replace('"','').replace("'",'')
     password_hash = hashlib.sha256(
         request.form.get("password").encode()).hexdigest()
     user_id = db.execute(
@@ -123,9 +125,10 @@ def sign_up():
     # POST
     db = DbWrapper()
     name = request.form.get("username").strip()
+    if "'" in name or ";" in name or '"' in name:
+        return render_template("sign_up.html", error_message="名前に;\"'を含めることはできません")
     already_used_name_list = db.execute(
         f"SELECT name FROM users WHERE name='{name}'")
-    print(already_used_name_list)
     if len(already_used_name_list):
         return render_template("sign_up.html", error_message="その名前はもう使われています")
     password_hash = hashlib.sha256(

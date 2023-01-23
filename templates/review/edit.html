@@ -18,7 +18,6 @@
     <script>
     document.querySelector("#submit").addEventListener("click", () => {
         let comment = document.querySelector("#comment").value;
-        console.log(comment, comment.includes(";"));
         if (comment == "" || comment.includes(";") || comment.includes("'") || comment ('"'))
             document.querySelector("#error_message").innerText = "コメントが空白、または;'_\"を含めることは許可されていません";
         else {

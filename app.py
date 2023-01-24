@@ -12,7 +12,7 @@ app = Flask(__name__, instance_relative_config=True,
             static_folder='./templates/icons')
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
-app.config['SECRET_KEY'] = "seacret"
+app.config['SECRET_KEY'] = b'X\xf8P\x93\xec&\x90o\xff\x16&\xe4\xd3n\xcfI\x9d\x0f\x1c"\xbcQ\xeb\xa6'
 app.config['UPLOAD_FOLDER'] = 'templates/icons/'
 app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
 app.permanent_session_lifetime = timedelta(minutes=3)
@@ -106,7 +106,7 @@ def login():
     db = DbWrapper()
     name = request.form.get("username").strip()
     if "'" in name or ";" in name or '"' in name:
-        name = name.replace(';','').replace('"','').replace("'",'')
+        name = name.replace(';', '').replace('"', '').replace("'", '')
     password_hash = hashlib.sha256(
         request.form.get("password").encode()).hexdigest()
     user_id = db.execute(

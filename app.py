@@ -4,6 +4,8 @@ from collections import namedtuple
 from datetime import timedelta
 from db import DbWrapper
 import hashlib
+from flask_wtf.csrf import CSRFProtect
+
 
 ICON_DIR = "icons"
 DEFAULT_ICON_PATH = "default_icon.jpg"
@@ -17,6 +19,7 @@ app.config['UPLOAD_FOLDER'] = 'templates/icons/'
 app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
 app.permanent_session_lifetime = timedelta(minutes=3)
 
+csrf = CSRFProtect(app)
 
 def login_required(func):
     def wrapper(*args, **kwargs):

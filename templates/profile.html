@@ -28,6 +28,7 @@
                     <small class="text-danger" id="error_message"></small>
                 </div>
                 <a class="btn btn-primary" href="/profile/change_password">パスワードを変更する</a>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             </form>
             <button class="btn btn-primary" id="submit">プロファイルを更新</button>
         </div>

@@ -17,6 +17,7 @@
                     <input name="password" type="password" class="form-control" id="password" />
                 </div>
                 <button type="submit" class="btn btn-primary">Login</button>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             </form>
             <a class="btn btn-outline-primary mb-3" href="/sign_up" role="button">Sign Up</a>
         </div>
